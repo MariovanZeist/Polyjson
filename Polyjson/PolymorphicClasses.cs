@@ -27,6 +27,7 @@ namespace Polyjson
 	public class Tiger : Mammal
 	{
 		public bool Striped { get; set; }
+		public string[] Countries { get; set; }
 	}
 
 	public class AntlerFish : Animal

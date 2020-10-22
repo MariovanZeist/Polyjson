@@ -7,7 +7,7 @@ namespace Polyjson
 	{
 		public static Giraffe Giraffe = new Giraffe { Id = Guid.NewGuid(), Name = "Marco", Legs = 4, NeckLength = 400 };
 		public static AntlerFish AntlerFish = new AntlerFish { Id = Guid.NewGuid(), Name = "Fishy", AntlerLength = 2, DiscoveryDate = DateTime.Now.AddYears(-100)};
-		public static Tiger Tiger = new Tiger { Id = Guid.NewGuid(), Name = "ElTigro", Legs = 4, Striped = true };
+		public static Tiger Tiger = new Tiger { Id = Guid.NewGuid(), Name = "ElTigro", Legs = 4, Striped = true , Countries = new []{ "India", "Taiwan", "Bonaire" } };
 		public static Zoo Zoo = new Zoo { Animals = new Animal[] { Giraffe, AntlerFish, Tiger } };
 
 		static void Main(string[] args)
