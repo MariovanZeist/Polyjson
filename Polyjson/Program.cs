@@ -19,13 +19,12 @@ namespace Polyjson
 
 		public static void HandleZoo()
 		{
-			//var ns1 = NS.Serialize(Zoo);
-			//WriteFile("D:\\NS.json", ns1);
+			var ns1 = NS.Serialize(Zoo);
+			WriteFile("D:\\NS.json", ns1);
 			var st1 = ST.Serialize(Zoo);
 			WriteFile("D:\\ST.json", st1);
-			var zoo = ST.DeSerialize<Zoo>(st1);
-
-			var s = ST.SerializeTest();
+			var zooNS = ST.DeSerialize<Zoo>(ns1);
+			var zooST = NS.DeSerialize<Zoo>(st1);
 		}
 
 		static void WriteFile(string filename, string json)

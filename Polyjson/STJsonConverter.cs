@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -11,9 +8,6 @@ namespace Polyjson
 	public class STJsonConverter<T> : JsonConverter<T>
 		where T : class
 	{
-		const string TypeInfoName = "$$Type";
-		static ConcurrentDictionary<Type, ConverterInfo> _converters = new ConcurrentDictionary<Type, ConverterInfo>();
-
 		public override bool CanConvert(Type typeToConvert) => typeof(T).IsAssignableFrom(typeToConvert);
 
 		public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -29,8 +23,7 @@ namespace Polyjson
 				throw new JsonException();
 			}
 
-			string propertyName = reader.GetString();
-			if (propertyName != TypeInfoName)
+			if (reader.GetString() != ConverterInfo.TypeInfoName)
 			{
 				throw new JsonException();
 			}
@@ -43,7 +36,7 @@ namespace Polyjson
 
 			var type = ConverterInfo.FindType(reader.GetString());
 			var value = Activator.CreateInstance(type) as T;
-			var converterInfo = GetConverterInfo(type);
+			var converterInfo = ConverterInfo.GetConverterInfo(type);
 
 			while (reader.Read())
 			{
@@ -54,7 +47,7 @@ namespace Polyjson
 
 				if (reader.TokenType == JsonTokenType.PropertyName)
 				{
-					propertyName = reader.GetString();
+					var propertyName = reader.GetString();
 					reader.Read();
 					var propertyInfo = converterInfo.Properties.FirstOrDefault(p => p.Name == propertyName);
 					propertyInfo.SetValue(value, JsonSerializer.Deserialize(ref reader, propertyInfo.PropertyType, options));
@@ -66,9 +59,9 @@ namespace Polyjson
 		public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
 		{
 			writer.WriteStartObject();
-			var converterInfo = GetConverterInfo(value.GetType());
+			var converterInfo = ConverterInfo.GetConverterInfo(value.GetType());
 			// Poly writer
-			writer.WriteString(TypeInfoName, ConverterInfo.GetTypeName(value.GetType()));
+			writer.WriteString(ConverterInfo.TypeInfoName, ConverterInfo.GetTypeName(value.GetType()));
 
 			foreach (var propertyInfo in converterInfo.Properties)
 			{
@@ -77,8 +70,6 @@ namespace Polyjson
 			}
 			writer.WriteEndObject();
 		}
-
-		static ConverterInfo GetConverterInfo(Type type) => _converters.GetOrAdd(type, t => ConverterInfo.BuildFrom(t));
 	}
 
 }
