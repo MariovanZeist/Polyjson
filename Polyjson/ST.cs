@@ -19,7 +19,12 @@ namespace Polyjson
 
 		static ST()
 		{
-			STSettings.Converters.Add(new STJsonConverter());
+			STSettings.Converters.Add(new STJsonConverter<Animal>());
+		}
+
+		public static string SerializeTest()
+		{
+			return JsonSerializer.Serialize(1, STSettings);
 		}
 
 		public static string Serialize<T>(T data )
@@ -44,61 +49,5 @@ namespace Polyjson
 		{
 			return JsonSerializer.Deserialize<T>(utf8Json, STSettings);
 		}
-	}
-
-
-	public class ConvertSTInfo : ConverterInfo
-	{
-		static (Type PropertyType, Type ConverterType)[] _supportedTypes = new[] { (typeof(int), typeof(ConvertSTIntProperty)), (typeof(bool), typeof(ConvertSTBoolProperty)), (typeof(string), typeof(ConvertSTStringProperty)) };
-
-		public ConvertSTInfo(IEnumerable<ConvertProperty> propertyConverters) : base(propertyConverters)
-		{
-		}
-
-		public static ConverterInfo Build(Type type)
-		{
-			var list = new List<ConvertProperty>();
-			foreach (var property in type.GetProperties())
-			{
-				var (propertyType, converterType) = _supportedTypes.FirstOrDefault(t => t.PropertyType == property.PropertyType);
-				if (converterType != null && property.CanRead && property.CanWrite)
-				{
-					var convertProperty = Activator.CreateInstance(converterType) as ConvertProperty;
-					convertProperty.PropertyInfo = property;
-					list.Add(convertProperty);
-				}
-			}
-			return new ConvertSTInfo(list);
-		}
-	}
-
-	public abstract class ConvertProperty
-	{
-		public PropertyInfo PropertyInfo { get; set; }
-	}
-
-	public abstract class ConvertSTProperty : ConvertProperty
-	{
-		public abstract void ReadProperty(ref Utf8JsonReader reader, object value);
-		public abstract void WriteProperty(Utf8JsonWriter writer, object value);
-	}
-
-	public class ConvertSTIntProperty : ConvertSTProperty
-	{
-		public override void ReadProperty(ref Utf8JsonReader reader, object value) => PropertyInfo.SetValue(value, reader.GetInt32());
-
-		public override void WriteProperty(Utf8JsonWriter writer, object value) => writer.WriteNumber(PropertyInfo.Name, (int)PropertyInfo.GetValue(value));
-	}
-
-	public class ConvertSTStringProperty : ConvertSTProperty
-	{
-		public override void ReadProperty(ref Utf8JsonReader reader, object value) => PropertyInfo.SetValue(value, reader.GetString());
-		public override void WriteProperty(Utf8JsonWriter writer, object value) => writer.WriteString(PropertyInfo.Name, (string)PropertyInfo.GetValue(value));
-	}
-
-	public class ConvertSTBoolProperty : ConvertSTProperty
-	{
-		public override void ReadProperty(ref Utf8JsonReader reader, object value) => PropertyInfo.SetValue(value, reader.GetBoolean());
-		public override void WriteProperty(Utf8JsonWriter writer, object value) => writer.WriteBoolean(PropertyInfo.Name, (bool)PropertyInfo.GetValue(value));
 	}
 }

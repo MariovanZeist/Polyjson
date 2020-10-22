@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Polyjson
 {
@@ -7,11 +8,10 @@ namespace Polyjson
 		public IEnumerable<Animal> Animals { get; set; }
 	}
 
-
 	public abstract class Animal
 	{
+		public Guid Id { get; set; }
 		public string Name { get; set; }
-
 	}
 
 	public abstract class Mammal : Animal
@@ -32,5 +32,6 @@ namespace Polyjson
 	public class AntlerFish : Animal
 	{
 		public int AntlerLength { get; set; }
+		public DateTime DiscoveryDate { get; set; }
 	}
 }

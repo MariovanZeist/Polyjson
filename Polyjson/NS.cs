@@ -11,6 +11,11 @@ namespace Polyjson
 			Formatting = Formatting.Indented
 		};
 
+		static NS()
+		{
+			NSSettings.Converters.Add(new NSJsonConverter<Animal>());
+		}
+
 		public static string Serialize<T>(T data)
 		{
 			return JsonConvert.SerializeObject(data, NSSettings);

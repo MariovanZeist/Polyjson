@@ -8,17 +8,15 @@ using System.Text.Json.Serialization;
 
 namespace Polyjson
 {
-	public class STJsonConverter : JsonConverter<Animal>
+	public class STJsonConverter<T> : JsonConverter<T>
+		where T : class
 	{
 		const string TypeInfoName = "$$Type";
 		static ConcurrentDictionary<Type, ConverterInfo> _converters = new ConcurrentDictionary<Type, ConverterInfo>();
 
-		public override bool CanConvert(Type typeToConvert)
-		{
-			return typeof(Animal).IsAssignableFrom(typeToConvert);
-		}
+		public override bool CanConvert(Type typeToConvert) => typeof(T).IsAssignableFrom(typeToConvert);
 
-		public override Animal Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+		public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 		{
 			if (reader.TokenType != JsonTokenType.StartObject)
 			{
@@ -44,43 +42,43 @@ namespace Polyjson
 			}
 
 			var type = ConverterInfo.FindType(reader.GetString());
-			var animal = Activator.CreateInstance(type) as Animal;
-			var ci = GetConverterInfo(type);
+			var value = Activator.CreateInstance(type) as T;
+			var converterInfo = GetConverterInfo(type);
 
 			while (reader.Read())
 			{
 				if (reader.TokenType == JsonTokenType.EndObject)
 				{
-					return animal;
+					return value;
 				}
 
 				if (reader.TokenType == JsonTokenType.PropertyName)
 				{
 					propertyName = reader.GetString();
 					reader.Read();
-					var ps = ci.PropertyConverters.FirstOrDefault(p => p.PropertyInfo.Name == propertyName) as ConvertSTProperty;
-					ps.ReadProperty(ref reader, animal);
+					var propertyInfo = converterInfo.Properties.FirstOrDefault(p => p.Name == propertyName);
+					propertyInfo.SetValue(value, JsonSerializer.Deserialize(ref reader, propertyInfo.PropertyType, options));
 				}
 			}
 			throw new JsonException();
 		}
 
-		public override void Write(Utf8JsonWriter writer, Animal value, JsonSerializerOptions options)
+		public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
 		{
 			writer.WriteStartObject();
-			var ci = GetConverterInfo(value.GetType());
+			var converterInfo = GetConverterInfo(value.GetType());
 			// Poly writer
 			writer.WriteString(TypeInfoName, ConverterInfo.GetTypeName(value.GetType()));
-			foreach (var item in ci.PropertyConverters)
+
+			foreach (var propertyInfo in converterInfo.Properties)
 			{
-				if (item is ConvertSTProperty c)
-				{
-					c.WriteProperty(writer, value);
-				}
+				writer.WritePropertyName(propertyInfo.Name);
+				JsonSerializer.Serialize(writer, propertyInfo.GetValue(value), propertyInfo.PropertyType, options);
 			}
 			writer.WriteEndObject();
 		}
 
-		static ConverterInfo GetConverterInfo(Type type) => _converters.GetOrAdd(type, t => ConvertSTInfo.Build(t));
+		static ConverterInfo GetConverterInfo(Type type) => _converters.GetOrAdd(type, t => ConverterInfo.BuildFrom(t));
 	}
+
 }

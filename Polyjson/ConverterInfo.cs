@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 
@@ -17,12 +18,13 @@ namespace Polyjson
 			return s;
 		}
 
-		public static Type FindType(string typeName)
-		{
-			return _knownTypes[typeName];
-		}
+		public static Type FindType(string typeName) => _knownTypes[typeName];
 
-		public IEnumerable<ConvertProperty> PropertyConverters { get; }
-		public ConverterInfo(IEnumerable<ConvertProperty> propertyConverters) => PropertyConverters = propertyConverters;
+		public IEnumerable<PropertyInfo> Properties { get; private set; }
+
+		protected ConverterInfo() {	}
+		public static ConverterInfo BuildFrom<T>() => BuildFrom(typeof(T));
+
+		public static ConverterInfo BuildFrom(Type type) => new ConverterInfo { Properties = type.GetProperties().Where(p => p.CanWrite && p.CanRead).ToArray() };
 	}
 }
