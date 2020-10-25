@@ -34,9 +34,8 @@ namespace Polyjson
 				throw new JsonException();
 			}
 
-			var type = ConverterInfo.FindType(reader.GetString());
-			var value = Activator.CreateInstance(type) as T;
-			var converterInfo = ConverterInfo.GetConverterInfo(type);
+			var converterInfo = ConverterInfo.GetConverterInfo(reader.GetString());
+			var value = Activator.CreateInstance(converterInfo.Type) as T;
 
 			while (reader.Read())
 			{
@@ -61,7 +60,7 @@ namespace Polyjson
 			writer.WriteStartObject();
 			var converterInfo = ConverterInfo.GetConverterInfo(value.GetType());
 			// Poly writer
-			writer.WriteString(ConverterInfo.TypeInfoName, ConverterInfo.GetTypeName(value.GetType()));
+			writer.WriteString(ConverterInfo.TypeInfoName, converterInfo.TypeDiscriminator);
 
 			foreach (var propertyInfo in converterInfo.Properties)
 			{

@@ -26,9 +26,8 @@ namespace Polyjson
 				throw new JsonException();
 			}
 
-			var type = ConverterInfo.FindType(reader.ReadAsString());
-			var value = Activator.CreateInstance(type) as T;
-			var converterInfo = ConverterInfo.GetConverterInfo(type);
+			var converterInfo = ConverterInfo.GetConverterInfo(reader.ReadAsString());
+			var value = Activator.CreateInstance(converterInfo.Type) as T;
 
 			while (reader.Read())
 			{
@@ -41,8 +40,11 @@ namespace Polyjson
 				{
 					var propertyName = reader.Value.ToString();
 					reader.Read();
-					var propertyInfo = converterInfo.Properties.FirstOrDefault(p => p.Name == propertyName);
-					propertyInfo.SetValue(value, serializer.Deserialize(reader, propertyInfo.PropertyType));
+					if (reader.TokenType != JsonToken.Null)
+					{
+						var propertyInfo = converterInfo.Properties.FirstOrDefault(p => p.Name == propertyName);
+						propertyInfo.SetValue(value, serializer.Deserialize(reader, propertyInfo.PropertyType));
+					}
 				}
 			}
 			throw new JsonException();
@@ -54,7 +56,7 @@ namespace Polyjson
 			var converterInfo = ConverterInfo.GetConverterInfo(value.GetType());
 			// Poly writer
 			writer.WritePropertyName(ConverterInfo.TypeInfoName);
-			writer.WriteValue(ConverterInfo.GetTypeName(value.GetType()));
+			writer.WriteValue(converterInfo.TypeDiscriminator);
 			foreach (var propertyInfo in converterInfo.Properties)
 			{
 				writer.WritePropertyName(propertyInfo.Name);
